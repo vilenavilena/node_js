@@ -1,47 +1,59 @@
-import colors from 'colors'
+require('colors')
 
-const [num1, num2] = process.argv.slice(2)
+const Colors = { GREEN: 0, YELLOW: 1, RED: 2 }
 
-function getPrimes(num1, num2) {
+let currentColor = Colors.GREEN;
+const leftRest = process.argv[2];
+const rightRest = process.argv[3];
+let noPrimeNum = true;
 
-    if (!/\d+/gm.test(num1) || /[a-zA-Zа-яА-Я]+/gm.test(num1) || !/\d+/gm.test(num2) || /[a-zA-Zа-яА-Я]+/gm.test(num2)) {
-        console.log(colors.red("Необходимо передать два числа"))
-        return
-    }
-
-    if (+num1 > +num2) [num1, num2] = [num2, num1]
-
-    const seive = [];
-    const primes = [];
-    let j = 0
-
-    for (let i = 2; i <= num2; i++) {
-        if (!seive[i]) {
-            primes.push(i);
-
-            if (i >= num1 && j == 0) {
-                console.log(colors.green(i))
-                j++
-            } else if (i >= num1 && j == 1) {
-                console.log(colors.yellow(i))
-                j++
-            } else if (i >= num1 && j == 2) {
-                console.log(colors.red(i))
-                j = 0
-            }
-
-            for (let j = i * i; j <= num2; j += i) {
-                seive[j] = true;
-            }
-        }
-    }
-
-    const pr = primes.filter((item) => item >= num1)
-    if (!pr.length) {
-        return console.log(colors.red('В указанном диапазоне простых чисел нет!'))
-    }
-
+if (isNaN(leftRest) || isNaN(rightRest)) {
+    console.log('Incorrect start parameters'.red);
     return;
 }
 
-getPrimes(num1, num2);
+const isPrimeNum = (num) => {
+    if (num <= 1)
+        return false;
+    for (let i = 2; i < num; i++)
+        if (num % i === 0) return false;
+    return true;
+}
+const changeColor = () => {
+    currentColor++;
+    if (currentColor > Colors.RED)
+        currentColor = Colors.GREEN;
+}
+
+const colorPrint = (num) => {
+    if (noPrimeNum) noPrimeNum = false;
+    switch (currentColor) {
+        case Colors.RED:
+            console.log(`${num}`.red);
+            break;
+        case Colors.GREEN:
+            console.log(`${num}`.green);
+            break;
+        case Colors.YELLOW:
+            console.log(`${num}`.yellow);
+            break;
+    }
+    changeColor();
+}
+
+// if (i % 3 === 0) {
+//     console.log(red(data[i]));
+// } else if ((i + 1) % 3 === 0) {
+// } else if (i % 3 === 1) {
+//     console.log(yellow(data[i]));
+// } else {
+//     console.log(green(data[i]));
+// }
+// console.log(arrColors[i % arrColors.length](arrNumbers[i].toString()))
+
+
+for (let i = leftRest; i <= rightRest; i++) {
+    if (isPrimeNum(i)) colorPrint(i);
+}
+if (noPrimeNum)
+    console.log(`There are no primes in this range[${leftRest},${rightRest}]`.red);
