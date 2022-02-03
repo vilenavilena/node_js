@@ -1,59 +1,52 @@
-require('colors')
 
-const Colors = { GREEN: 0, YELLOW: 1, RED: 2 }
+require('moment-precise-range-plugin');
+const moment = require('moment');
+const EventEmitter = require('events');
+const [dateStringInFuture] = process.argv.slice(2);
+const DATE_FORMAT_PATTERN = 'YYYY-MM-DD HH:mm:ss';
 
-let currentColor = Colors.GREEN;
-const leftRest = process.argv[2];
-const rightRest = process.argv[3];
-let noPrimeNum = true;
+/**
+ * @param dateString
+ * @returns {Date}
+ */
+const getDateFromDateString = (dateString) => {
+    const [hour, day, month, year] = dateString.split('-');
+    return new Date(Date.UTC(year, month - 1, day, hour));
+};
 
-if (isNaN(leftRest) || isNaN(rightRest)) {
-    console.log('Incorrect start parameters'.red);
-    return;
-}
+/**
+ * @param {Date} dateInFuture
+ */
+const showRemainingTime = (dateInFuture) => {
+    const dateNow = new Date();
 
-const isPrimeNum = (num) => {
-    if (num <= 1)
-        return false;
-    for (let i = 2; i < num; i++)
-        if (num % i === 0) return false;
-    return true;
-}
-const changeColor = () => {
-    currentColor++;
-    if (currentColor > Colors.RED)
-        currentColor = Colors.GREEN;
-}
+    if (dateNow >= dateInFuture) {
+        emitter.emit('timerEnd');
+    } else {
+        const currentDateFormatted = moment(dateNow, DATE_FORMAT_PATTERN);
+        const futureDateFormatted = moment(dateInFuture, DATE_FORMAT_PATTERN);
+        const diff = moment.preciseDiff(currentDateFormatted, futureDateFormatted);
 
-const colorPrint = (num) => {
-    if (noPrimeNum) noPrimeNum = false;
-    switch (currentColor) {
-        case Colors.RED:
-            console.log(`${num}`.red);
-            break;
-        case Colors.GREEN:
-            console.log(`${num}`.green);
-            break;
-        case Colors.YELLOW:
-            console.log(`${num}`.yellow);
-            break;
+        console.clear();
+        console.log(diff);
     }
-    changeColor();
-}
+};
 
-// if (i % 3 === 0) {
-//     console.log(red(data[i]));
-// } else if ((i + 1) % 3 === 0) {
-// } else if (i % 3 === 1) {
-//     console.log(yellow(data[i]));
-// } else {
-//     console.log(green(data[i]));
-// }
-// console.log(arrColors[i % arrColors.length](arrNumbers[i].toString()))
+/**
+ * @param {Number} timerId
+ */
+const showTimerDone = (timerId) => {
+    clearInterval(timerId);
+    console.log('Таймер истек');
+};
 
+const emitter = new EventEmitter();
+const dateInFuture = getDateFromDateString(dateStringInFuture);
+const timerId = setInterval(() => {
+    emitter.emit('timerTick', dateInFuture);
+}, 1000)
 
-for (let i = leftRest; i <= rightRest; i++) {
-    if (isPrimeNum(i)) colorPrint(i);
-}
-if (noPrimeNum)
-    console.log(`There are no primes in this range[${leftRest},${rightRest}]`.red);
+emitter.on('timerTick', showRemainingTime);
+emitter.on('timerEnd', () => {
+    showTimerDone(timerId);
+});
